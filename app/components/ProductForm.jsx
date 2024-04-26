@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import axios from "axios";
+import { useRef } from 'react';
 
 export default function ProductForm({
     _id,
@@ -15,6 +16,10 @@ export default function ProductForm({
     const [description,setDescription] = useState(existingDescription || '');
     const [price,setPrice] = useState(existingPrice || '');
     const [goToProduct,setGoToProduct] = useState(false);
+    
+    const inputFileRef = useRef(null);
+    const [blob, setBlob] = useState(null);
+
     async function saveProduct(ev){
         ev.preventDefault();
         const data = {title,description,price};
@@ -32,17 +37,23 @@ export default function ProductForm({
         return router.push('/product');
     }
 
-    async function uploadImages(ev){
-        const files = ev.target?.files;
-        if(files?.length > 0){
-            const data = new FormData();
-            for(const file of files){
-                data.append('file',file)
-            }
-            const response = await axios.post('/api/upload',data);
-            console.log(response);
-        }
-    }
+    async function uploadImages(event){
+        event.preventDefault();
+
+        const file = inputFileRef.current.files;
+
+        const response = await fetch(
+          `/api/upload?filename=${file.name}`,
+          {
+            method: 'POST',
+            body: file,
+          },
+        );
+
+        const newBlob = (await response.json());
+
+        setBlob(newBlob);
+      }
     return(
         <>
             <form onSubmit={saveProduct}>
